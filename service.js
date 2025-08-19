@@ -14,13 +14,16 @@ const pool = mysql.createPool({
     port: process.env.DB_PORT
 })
 
-pool.connect((err) => {
-    if (err) {
-        console.log(err.message);
+async function testConnection() {
+    try {
+        const connection = await pool.getConnection();
+        console.log('Database connected successfully');
+        connection.release();
+    } catch (error) {
+        console.error('Database connection failed:', error);
     }
-    console.log('db' + pool.state);
-})
-
+}
+testConnection();
 
 class Services {
     static getServicesInstance() {
@@ -115,6 +118,181 @@ class Services {
             
             const [result] = await pool.query(query);
             return result;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async classesDetails(id) {
+        try {
+            const [result] = await pool.execute(`SELECT classes.*,
+                COUNT(enrollments.user_id) as enrolled_students
+            FROM classes
+            LEFT JOIN enrollments ON classes.id = enrollments.class_id
+            WHERE classes.id = ?
+            GROUP BY classes.id`, [id])
+
+            if (result.length === 0) {
+                throw new Error('Class not found')
+            }
+
+            return result;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async createClasses(title, description, instructor, duration_hours, max_students) {
+        try {
+
+            if (!title || !instructor) {
+                throw new Error('Title and instructor are required');
+            }
+
+            const query = `INSERT INTO classes (title, description, instructor, duration_hours, max_students) 
+            VALUES (?, ?, ?, ?, ?)`;
+
+            const [result] = await pool.execute(query, [
+                title,
+                description,
+                instructor,
+                duration_hours,
+                max_students
+            ]);
+
+            return {
+                id: result.insertId,
+                title,
+                description,
+                instructor,
+                duration_hours,
+                max_students
+            };
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async updateClasses(id, { title, description, instructor, duration_hours, max_students }) {
+        try {
+            const [existingClasses] = await pool.execute('SELECT * FROM classes WHERE id = ?', [id])
+            if (existingClasses.length === 0) {
+                throw new Error('Class not found!')
+            }
+
+            const query = `UPDATE classes 
+            SET title = ?, 
+            description = ?, 
+            instructor = ?, 
+            duration_hours = ?, 
+            max_students = ? 
+            WHERE id = ?`;
+
+            const [result] = await pool.execute(query, [
+                title,
+                description,
+                instructor,
+                duration_hours,
+                max_students,
+                id
+            ]);
+
+            return { 
+                success: result.affectedRows > 0, 
+                message: result.affectedRows > 0
+                ? "Class updated successfully"
+                : "No changes made"
+             };
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async deleteClasses(id) {
+        try {
+            const [existingClasses] = await pool.execute('SELECT * FROM classes WHERE id = ?', [id])
+            if (existingClasses.length === 0) {
+                throw new Error('Class not found!')
+            }
+
+            await pool.execute('DELETE FROM classes WHERE id = ?', [id]);
+
+            return {
+                success: true,
+                message: "Class Deleted Succesfully"
+            };
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async enroll(user_id, class_id) {
+        try{
+            if (!class_id) {
+                throw new Error('Class ID is required!');
+            }
+
+            const [classResult] = await pool.execute('SELECT * FROM classes WHERE id = ?', [class_id])
+            if (classResult.length === 0) {
+                throw new Error('Class not found!')
+            }
+
+            const [existingEnrollment] = await pool.execute('SELECT * FROM enrollments WHERE user_id = ? AND class_id = ?', [user_id, class_id]);
+            if (existingEnrollment.length > 0) {
+                throw new Error('Already enrolled in this class');
+            }
+
+            const [enrollmentCount] = await pool.execute('SELECT COUNT(*) as count FROM enrollments WHERE class_id = ?', [class_id]);
+            if (enrollmentCount[0].count >= classData.max_students) {
+            throw new Error('Class is full');
+        }
+
+            const [result] = await pool.execute('INSERT INTO enrollments (user_id, class_id) VALUES (?, ?)', [user_id, class_id]);
+
+            return {
+                id: result.insertId,
+                user_id,
+                class_id
+            };
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async myClasses(user_id) {
+        try {
+            const [result] = await pool.execute(`SELECT classes.*, enrollments.enrolled_at
+                FROM classes
+                JOIN enrollments ON classes.id = enrollments.class_id
+                WHERE enrollments.user_id = ?
+                ORDER BY enrollments.enrolled_at DESC`, [user_id]);
+
+                return result;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async deleteEnrollments(user_id, class_id) {
+        try {
+            const [existingEnrollment] = await pool.execute('SELECT * FROM enrollments WHERE user_id = ? AND class_id = ?', [user_id, class_id]);
+            if (existingEnrollment.length === 0) {
+                throw new Error('Enrollments not found');
+            }
+
+            await pool.execute('DELETE FROM enrollments WHERE user_id = ? AND class_id = ?', [user_id, class_id]);
+
+            return {
+                success: true,
+                message: "Successfuly unenrolled from class"
+            };
         } catch (error) {
             console.error(error);
             throw error;
