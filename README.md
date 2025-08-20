@@ -144,7 +144,7 @@ Get a specific classs details, for example /classes/2
 }
 ```
 
-### 5. POST /classes (Admin Only)
+### 5. POST /classes (Admin Only Scenario)
 Create classes and assign them to users
 #### Request:
 ```json
@@ -171,7 +171,7 @@ Create classes and assign them to users
 }
 ```
 
-### 6. PUT /classes/:id (Admins Only)
+### 6. PUT /classes/:id (Admins Only Scenario)
 Update/edit a certain class
 #### Request:
 ```json
@@ -188,7 +188,7 @@ Update/edit a certain class
 {"success":true,"message":"Class updated successfully"}
 ```
 
-### 7. DELETE /classes/:id
+### 7. DELETE /classes/:id (Admins Only Scenario)
 Delete a class entirely
 #### Response:
 ```json
@@ -215,7 +215,7 @@ get the class list of the user
 {"message":"Enrolled classes retrieved successfully","classes":[{"id":2,"title":"React.js","description":"Belajar React untuk frontend","instructor":"Sir Rafan","duration_hours":2,"max_students":50,"created_at":"2025-08-20T09:14:40.000Z","enrolled_at":"2025-08-20T09:34:30.000Z"}]}
 ```
 
-### 10. DELETE /enroll/:class_id
+### 10. DELETE /enroll/:class_id (Admins Only Scenario)
 Unenroll/delete user from class
 #### Response:
 ```json
@@ -265,7 +265,7 @@ Preferably use nodemon:
 ```bash
 nodemon server
 ```
-without nodemone:
+without nodemon:
 ```bash
 node server.js
 ```
