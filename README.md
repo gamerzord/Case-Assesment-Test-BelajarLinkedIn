@@ -205,7 +205,7 @@ Enroll to a class
 ```
 #### Response:
 ```json
-{"message":"Successfully enrolled in class","enrollment":{"id":1,"user_id":`1,"class_id":2}}
+{"message":"Successfully enrolled in class","enrollment":{"id":1,"user_id":1,"class_id":2}}
 ```
 
 ### 9. GET /my-classes
