@@ -241,13 +241,13 @@ cd Case-Assesment-Test-BelajarLinkedIn
 npm install
 ```
 
-**3. Setup Database**
+**3. Setup Database**  
 Make sure XAMPP/MySql in general is installed, and build the database
 ```sql
 CREATE DATABASE belajar_linkedin;
 ```
 
-**4. Environment Config**
+**4. Environment Config**  
 Make sure to make .env file, heres all the variables.
 ```
 PORT=
@@ -260,12 +260,12 @@ USER=
 PASSWORD=
 ```
 
-**5. Run it**
+**5. Run it**  
 Preferably use nodemon:
 ```bash
 nodemon server
 ```
-withoud nodemone:
+without nodemone:
 ```bash
 node server.js
 ```
