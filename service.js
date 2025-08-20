@@ -57,7 +57,7 @@ class Services {
         return {
             id: result.insertId,
             name,
-            email
+            email,
         };
     } catch (error) {
         console.error(error);
@@ -236,11 +236,13 @@ class Services {
             if (!class_id) {
                 throw new Error('Class ID is required!');
             }
-
+            
             const [classResult] = await pool.execute('SELECT * FROM classes WHERE id = ?', [class_id])
             if (classResult.length === 0) {
                 throw new Error('Class not found!')
             }
+
+            const classData = classResult[0];
 
             const [existingEnrollment] = await pool.execute('SELECT * FROM enrollments WHERE user_id = ? AND class_id = ?', [user_id, class_id]);
             if (existingEnrollment.length > 0) {
@@ -248,9 +250,13 @@ class Services {
             }
 
             const [enrollmentCount] = await pool.execute('SELECT COUNT(*) as count FROM enrollments WHERE class_id = ?', [class_id]);
-            if (enrollmentCount[0].count >= classData.max_students) {
+            
+            const currentEnrollments = enrollmentCount[0].count;
+
+            if (currentEnrollments >= classData.max_students) {
             throw new Error('Class is full');
         }
+        
 
             const [result] = await pool.execute('INSERT INTO enrollments (user_id, class_id) VALUES (?, ?)', [user_id, class_id]);
 
